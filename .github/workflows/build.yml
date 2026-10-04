@@ -2,22 +2,23 @@ name: Build ZMK firmware
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
-  # The reusable workflow below cannot apply patches/, so while that directory
-  # holds any, a CI build would be missing them -- and with CONFIG_ZMK_SLEEP on,
-  # an image without patches/0002 sleeps and never wakes on a keypress. Refuse
-  # until the patches live on a fork that config/west.yml points at. Build
-  # locally with ./build.sh in the meantime.
-  patches-upstreamed:
+  # build.sh can apply patches/ to the board port for a local experiment; the
+  # reusable workflow below cannot. A CI image silently missing a patch is
+  # worse than no image -- without the wake-source change, for one, a keyboard
+  # with CONFIG_ZMK_SLEEP on sleeps and never wakes on a keypress -- so refuse
+  # while patches/ holds any. Changes to the board port belong on the fork
+  # config/west.yml points at.
+  no-local-patches:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: |
           if ls patches/*.patch >/dev/null 2>&1; then
-            echo "::error::patches/ is not empty. Move the patches onto a fork of NocFree-and-zmk, point config/west.yml at it, and delete them here."
+            echo "::error::patches/ is not empty. Commit them to the NocFree-and-zmk fork, move the revision in config/west.yml, and delete them here."
             exit 1
           fi
 
   build:
-    needs: patches-upstreamed
+    needs: no-local-patches
     # Same commit as zmk in config/west.yml.
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@6e2ef41e022d555b10f116e395832913f71717b3

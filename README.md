@@ -47,7 +47,7 @@ own reusable workflow:
     zephyr/module.yml       makes this repository a Zephyr module, so that
     CMakeLists.txt, Kconfig   modules/ is compiled in
     modules/ble-profile-name/   per-profile Bluetooth names
-    patches/                changes to the board port; see Local patches
+    patches/                normally absent; local board-port experiments
     .github/workflows/      CI; refuses to run while patches/ is non-empty
     diagnostics/int-probe/  the probe that established the INT line works
     firmware/               build output (ignored by git)
@@ -372,7 +372,8 @@ Everything runs in a container; no Zephyr toolchain, no west and no Python
 are installed on the host. It is a local twin of the CI build and reads the
 same inputs: `config/west.yml` for sources, `build.yaml` for what to build,
 `config/` for keymaps and Kconfig, and this repository as a module. The one
-thing it adds is applying `patches/`, which CI cannot do.
+thing it adds is applying `patches/`, if there are any -- a way to try a
+board-port change before committing it to the fork.
 
 It builds in `~/.cache/zmk-nocfree/ws` (about 3 GB, outside this folder) and
 writes the images to `firmware/`. The first run downloads Zephyr and its
@@ -384,27 +385,21 @@ board port, is no longer used.)
 
 `.github/workflows/build.yml` calls ZMK's reusable `build-user-config`
 workflow, pinned to the same ZMK commit as `config/west.yml`; each push
-builds every `build.yaml` entry and attaches the images to the run. It is
-deliberately blocked for now: it cannot apply `patches/`, and an image
-without patches/0002 but with CONFIG_ZMK_SLEEP on sleeps and never wakes on a
-keypress. To unblock it, put the patches on a fork:
+builds every `build.yaml` entry and attaches the images to the run.
 
-    fork github.com/Thie1e/NocFree-and-zmk, then in a clone of the fork:
-    git checkout -b nocfree-zmk2 08bc83bfa269e21275449d691e9b48eecf9e3544
-    git am /path/to/this/repo/patches/*.patch
-    git push -u origin nocfree-zmk2
-
-then point the `nocfree` remote in `config/west.yml` at the fork, set the
-revision to the new head, and delete `patches/`. `build.sh` keeps working
-unchanged, with nothing left to apply.
+It refuses to build while `patches/` holds anything, because it cannot apply
+them, and an image silently missing a board-port change is worse than none --
+without the wake-source commit, a keyboard with CONFIG_ZMK_SLEEP on sleeps and
+never wakes on a keypress.
 
 ## Build provenance
 
 All of it is pinned in config/west.yml:
 
-Source: github.com/Thie1e/NocFree-and-zmk branch iso-de
-        at 08bc83bfa269e21275449d691e9b48eecf9e3544
-        plus patches/ -- see "Local patches" below
+Source: github.com/mathiasi/NocFree-and-zmk branch kscan-int-sleep
+        at 2e5d9d0040e11b76752d87195c3c16cd2cc549d7
+        = github.com/Thie1e/NocFree-and-zmk branch iso-de at 08bc83bf
+          plus two commits -- see "Board-port changes" below
 ZMK pinned to 6e2ef41e022d555b10f116e395832913f71717b3
 Toolchain pinned by digest rather than by a moving tag:
 
@@ -473,7 +468,8 @@ new hashes come from the layout alone.
 
 The right-half image WAS byte-identical to the one the Windows sibling runs,
 for as long as the only differences were keymap ones -- the peripheral never
-links the keymap. That stopped being true with patches/0001: it changes the
+links the keymap. That stopped being true with the INT-idle change (then
+patches/0001, now commit 7d04c9d on the fork): it changes the
 kscan driver and both board devicetrees, so both images now differ from the
 sibling's and both halves need reflashing for it.
 
@@ -570,7 +566,8 @@ rather than slow. Any out-of-band scan resets the deadline to now.
 
 ### Deep sleep works, but is not enabled by default
 
-patches/0002 adds the wake path and it is verified on hardware, both halves on
+The wake-source commit (2e5d9d0 on the fork, formerly patches/0002) adds the
+wake path and it is verified on hardware, both halves on
 battery: at the sleep timeout the Bluetooth link drops, and a keypress brings
 the keyboard back.
 
@@ -619,20 +616,23 @@ factory firmware and is measured working.
 Power actually saved is also unmeasured. The claim is only that the I2C bus
 stops being driven about 1.5 ms in every 10 ms while idle.
 
-## Local patches
+## Board-port changes
 
-    patches/0001-kscan-interrupt-idle.patch     scanner parks on INT when idle
-    patches/0002-kscan-sleep-wake-source.patch   INT as a System OFF wake source
+Two commits on github.com/mathiasi/NocFree-and-zmk, branch kscan-int-sleep,
+on top of Thie1e's iso-de at 08bc83bf:
 
-Changes the fork cannot carry as user config: the kscan driver and both board
-devicetrees. build.sh resets the board port's checkout in the west workspace
-to the pinned commit and applies everything in patches/ in order, failing
-loudly if one does not apply, so the pinned commit plus this directory remains
-the whole input set. They are in `git format-patch` form, so `git am` moves
-them onto a fork as-is -- see CI under Building for why that is the next step.
+    7d04c9d  kscan: wait on the PCA9555 INT line when idle
+    2e5d9d0  kscan: arm the INT line as a System OFF wake source
+
+Changes that cannot be carried as user config: the kscan driver and both
+board devicetrees. Until 2026-10-04 they lived here as patches/0001 and 0002
+and build.sh applied them; moving them onto the fork is what lets CI build.
+The tree is byte-for-byte the one build.sh used to produce by patching, so
+the images did not change.
 
 This is the first thing here that is not a user-config override, and it is the
-reason the build is no longer stock upstream. Worth offering to the fork:
+reason the build is no longer stock upstream. Worth offering upstream as a
+pull request from that branch:
 docs/limitations.md is wrong on this point and the author verified the backlight
 pin the same evidence-first way.
 

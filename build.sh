@@ -13,7 +13,9 @@
 # This is the local twin of the GitHub Actions build (.github/workflows), and
 # reads the same inputs: config/west.yml for sources, build.yaml for what to
 # build, config/ for keymaps and Kconfig, this repository as a Zephyr module.
-# The one thing it does that CI cannot is apply patches/ to the board port.
+# The one thing it adds is applying patches/ to the board port, if there are
+# any -- a way to try a board-port change before committing it to the fork.
+# CI refuses to build while patches/ is non-empty.
 #
 # Requires: container (https://github.com/apple/container), ~4 GB free.
 #
@@ -86,9 +88,8 @@ container run --rm --arch arm64 -m 8g -c 8 \
         west zephyr-export
         echo "==> board port at $(git -C "${port}" rev-parse --short HEAD)"
 
-        # Local patches, applied in order: changes to the board port that
-        # cannot be carried as user config. The pinned revision plus this
-        # directory is the whole input set, so the build stays reproducible.
+        # Local patches, applied in order, for trying a board-port change
+        # before it is committed to the fork. Normally there are none.
         shopt -s nullglob
         for patch in /repo/patches/*.patch; do
             if ! git -C "${port}" apply --check "${patch}" 2>/dev/null; then

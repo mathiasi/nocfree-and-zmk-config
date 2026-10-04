@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: MIT
 
-# Pinned build inputs. Everything here is public: this manifest, this
-# repository and patches/ are enough to reproduce every firmware image from a
-# clean checkout.
+# Pinned build inputs. Everything here is public: this manifest and this
+# repository are enough to reproduce every firmware image from a clean
+# checkout.
 #
-# NocFree-and-zmk is the board port (board definition, kscan driver). It is
-# pinned to the upstream commit; patches/ is applied on top by build.sh. Once
-# the patches live as commits on a fork, point the nocfree remote at the fork,
-# move the revision to the patched commit and empty patches/ -- CI refuses to
-# build until then, because it cannot apply them.
+# NocFree-and-zmk is the board port (board definition, kscan driver). This
+# pins our fork of Thie1e/NocFree-and-zmk: branch kscan-int-sleep, which is
+# upstream iso-de at 08bc83bf plus two kscan commits -- interrupt-driven idle
+# on the PCA9555 INT line, and INT as the System OFF wake source. Rebase that
+# branch to move to a newer upstream, then update the revision here.
 manifest:
   remotes:
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
     - name: nocfree
-      url-base: https://github.com/Thie1e
+      url-base: https://github.com/mathiasi
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -22,7 +22,7 @@ manifest:
       import: app/west.yml
     - name: NocFree-and-zmk
       remote: nocfree
-      revision: 08bc83bfa269e21275449d691e9b48eecf9e3544 # branch iso-de
+      revision: 2e5d9d0040e11b76752d87195c3c16cd2cc549d7 # branch kscan-int-sleep
       path: nocfree-and-zmk
   self:
     path: config
