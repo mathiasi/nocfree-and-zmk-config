@@ -1,0 +1,7 @@
+# This repository is itself a Zephyr module, so the code under modules/ is
+# built into the firmware. GitHub Actions adds it automatically when this file
+# exists; build.sh passes it as ZMK_EXTRA_MODULES.
+name: nocfree-zmk-config
+build:
+  cmake: .
+  kconfig: Kconfig

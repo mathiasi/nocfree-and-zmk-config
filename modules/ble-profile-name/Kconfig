@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+
+config NOCFREE_BLE_PROFILE_NAME
+    bool "Append the Bluetooth profile number to the advertised device name"
+    default y
+    depends on ZMK_BLE && BT_DEVICE_NAME_DYNAMIC
+    # Central only. The ZMK calls it makes are not compiled into a split
+    # peripheral, where it would fail at link time -- so the right half gets
+    # this module on its module list too, and it simply switches itself off.
+    depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL
+    help
+      ZMK advertises one static name for every profile, so five profiles all
+      appear to a host as the same device and there is no way to tell which
+      slot you are pairing. The factory firmware names them per slot. This
+      renames on every profile change, matching that convention.

@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+#
+# What to build. Read by GitHub Actions and by build.sh alike, so this file is
+# the one list of images.
+#
+# Two units, one keymap each. The keymaps differ on purpose -- bottom row,
+# the two crossed ISO keys, the F-row -- and must never be copied between
+# units; see the header of each .keymap. Only the left half links a keymap, so
+# the right image is shared by both units and is built once (it still needs a
+# keymap to configure, and any of them gives the same bytes).
+#
+# ${GITHUB_WORKSPACE} is the repository root: set by Actions, and by build.sh
+# inside its container.
+
+include:
+  - board: nocfree_and_left/nrf52833/zmk
+    cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/home.keymap
+    artifact-name: nocfree_and_left_ISO_home
+
+  # Office unit (Windows, Ctrl and Fn caps swapped). Uncomment once
+  # config/office.keymap is in the repository.
+  # - board: nocfree_and_left/nrf52833/zmk
+  #   cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/office.keymap
+  #   artifact-name: nocfree_and_left_ISO_office
+
+  - board: nocfree_and_right/nrf52833/zmk
+    cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/home.keymap
+    artifact-name: nocfree_and_right_ISO

@@ -1,0 +1,7 @@
+name: nocfree-int-probe
+
+build:
+  cmake: .
+  kconfig: Kconfig
+  settings:
+    dts_root: .

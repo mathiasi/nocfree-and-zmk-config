@@ -1,0 +1,122 @@
+From 990bb2701f1cf5b26d04056e198b4ac100fa5c25 Mon Sep 17 00:00:00 2001
+From: nocfree-zmk2 <local@invalid>
+Date: Tue, 15 Sep 2026 22:52:17 +0200
+Subject: [PATCH 2/2] kscan: arm the INT line as a System OFF wake source
+
+Deep sleep needs a wake path out of System OFF, and on nRF52 that is the
+SENSE/DETECT signal -- level-based. The GPIOTE edge event the scanner runs on
+does not survive System OFF, so the pin is re-armed level-triggered in the
+pm_action suspend hook. The storm that makes a level interrupt unusable while
+running cannot happen there: no CPU is left to re-enter the handler.
+
+INT is cleared first, by reading each expander input registers directly
+rather than through a scan, which would reschedule work on a queue that is
+about to stop. A stale assertion turns System OFF into an immediate wake and
+the keyboard never sleeps at all. If that read fails the pin is armed anyway:
+a spurious wake costs power, a keyboard that cannot wake costs the keyboard.
+
+This only adds the capability. Enabling CONFIG_ZMK_SLEEP is a config decision,
+and ZMK declines to sleep while USB is powered in any case.
+
+Verified on hardware, both halves on battery: the link drops at the sleep
+timeout and a keypress wakes it, that press being consumed as the trigger.
+---
+ drivers/kscan/kscan_pca9555.c | 71 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 70 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/kscan/kscan_pca9555.c b/drivers/kscan/kscan_pca9555.c
+index 36e0106..2171e21 100644
+--- a/drivers/kscan/kscan_pca9555.c
++++ b/drivers/kscan/kscan_pca9555.c
+@@ -14,6 +14,7 @@
+ #include <zephyr/init.h>
+ #include <zephyr/kernel.h>
+ #include <zephyr/logging/log.h>
++#include <zephyr/pm/device.h>
+ #include <zephyr/sys/util.h>
+ 
+ #include <zmk/debounce.h>
+@@ -516,6 +517,72 @@ static int kscan_pca9555_init(const struct device *dev) {
+     return 0;
+ }
+ 
++#if IS_ENABLED(CONFIG_PM_DEVICE)
++
++/*
++ * Deep sleep.
++ *
++ * System OFF wakes on the SENSE/DETECT signal, which is level-based. The
++ * GPIOTE edge event this driver runs on does not survive System OFF -- the
++ * peripheral is powered down -- so the pin has to be re-armed level-triggered
++ * on the way down. The storm that makes a level interrupt unusable while
++ * running cannot happen here: there is no CPU left to re-enter.
++ *
++ * INT is cleared first, by reading every expander's input registers directly
++ * rather than through a scan, which would reschedule work on a queue that is
++ * about to stop. A stale assertion left assertedturns System OFF into an
++ * immediate wake and the keyboard never sleeps at all.
++ */
++static int kscan_pca9555_pm_action(const struct device *dev, enum pm_device_action action) {
++    const struct kscan_pca9555_config *config = dev->config;
++    struct kscan_pca9555_data *data = dev->data;
++
++    if (!kscan_pca9555_has_int(config)) {
++        return 0;
++    }
++
++    switch (action) {
++    case PM_DEVICE_ACTION_SUSPEND: {
++        kscan_pca9555_int_disarm(dev);
++
++        for (uint8_t i = 0; i < config->expander_count; i++) {
++            uint16_t discard;
++
++            if (kscan_pca9555_read_pair(&config->expanders[i],
++                                        NOCFREE_PCA9555_REG_INPUT_PORT0, &discard)) {
++                /*
++                 * The bus is already gone or the part did not answer. Arming
++                 * anyway is the safer half of the trade: a spurious wake costs
++                 * power, a keyboard that cannot wake costs the keyboard.
++                 */
++                LOG_WRN("Could not clear INT on 0x%02x before sleep", config->expanders[i].addr);
++                break;
++            }
++        }
++
++        int err = gpio_pin_interrupt_configure_dt(&config->int_gpio, GPIO_INT_LEVEL_ACTIVE);
++        if (err) {
++            LOG_ERR("Cannot arm INT as a wake source: %d", err);
++            return err;
++        }
++
++        data->int_armed = true;
++        return 0;
++    }
++
++    case PM_DEVICE_ACTION_RESUME:
++        /* Whatever woke us, scanning owns the pin again. */
++        kscan_pca9555_int_disarm(dev);
++        data->immediate_streak = 0;
++        return 0;
++
++    default:
++        return -ENOTSUP;
++    }
++}
++
++#endif /* CONFIG_PM_DEVICE */
++
+ static const struct kscan_driver_api kscan_pca9555_api = {
+     .config = kscan_pca9555_configure,
+     .enable_callback = kscan_pca9555_enable_callback,
+@@ -585,7 +652,9 @@ static const struct kscan_driver_api kscan_pca9555_api = {
+         .fallback_poll_period_ms = DT_INST_PROP(n, fallback_poll_period_ms),                        \
+     };                                                                                             \
+                                                                                                    \
+-    DEVICE_DT_INST_DEFINE(n, &kscan_pca9555_init, NULL, &kscan_pca9555_data_##n,                   \
++    PM_DEVICE_DT_INST_DEFINE(n, kscan_pca9555_pm_action);                                          \
++    DEVICE_DT_INST_DEFINE(n, &kscan_pca9555_init, PM_DEVICE_DT_INST_GET(n),                        \
++                          &kscan_pca9555_data_##n,                                                 \
+                           &kscan_pca9555_config_##n, POST_KERNEL,                                  \
+                           CONFIG_NOCFREE_KSCAN_PCA9555_INIT_PRIORITY, &kscan_pca9555_api);
+ 

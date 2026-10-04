@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+
+# Pinned build inputs. Everything here is public: this manifest, this
+# repository and patches/ are enough to reproduce every firmware image from a
+# clean checkout.
+#
+# NocFree-and-zmk is the board port (board definition, kscan driver). It is
+# pinned to the upstream commit; patches/ is applied on top by build.sh. Once
+# the patches live as commits on a fork, point the nocfree remote at the fork,
+# move the revision to the patched commit and empty patches/ -- CI refuses to
+# build until then, because it cannot apply them.
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: nocfree
+      url-base: https://github.com/Thie1e
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: 6e2ef41e022d555b10f116e395832913f71717b3
+      import: app/west.yml
+    - name: NocFree-and-zmk
+      remote: nocfree
+      revision: 08bc83bfa269e21275449d691e9b48eecf9e3544 # branch iso-de
+      path: nocfree-and-zmk
+  self:
+    path: config

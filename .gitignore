@@ -1,0 +1,12 @@
+.DS_Store
+
+# Build output. Rebuilt by ./build.sh or downloaded from a CI run.
+firmware/
+*.uf2
+
+# CURRENT.UF2 readbacks taken by flash.sh before every write.
+backups/
+
+# The vendor's factory images. Kept on disk for ./flash.sh --stock and for
+# identifying readbacks, but not redistributed: they are NocFree's, not ours.
+stock-rollback/

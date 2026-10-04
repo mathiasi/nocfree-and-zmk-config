@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT
+
+description: Types the state of the probed interrupt line as keystrokes
+
+compatible: "nocfree,behavior-int-probe"
+
+include: zero_param.yaml
+
+properties:
+  tap-ms:
+    type: int
+    description: Milliseconds between queued taps. Defaults to 15.
