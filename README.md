@@ -387,6 +387,12 @@ board port, is no longer used.)
 workflow, pinned to the same ZMK commit as `config/west.yml`; each push
 builds every `build.yaml` entry and attaches the images to the run.
 
+CI and build.sh produce byte-identical images: checked on the first green
+run, 2026-10-04, against b7b811bf... and 76059637.... One input is not pinned
+on the CI side -- ZMK's workflow uses zmk-build-arm:stable rather than the
+digest build.sh pins -- so if the two ever disagree, a moved :stable is the
+first suspect.
+
 It refuses to build while `patches/` holds anything, because it cannot apply
 them, and an image silently missing a board-port change is worse than none --
 without the wake-source commit, a keyboard with CONFIG_ZMK_SLEEP on sleeps and
