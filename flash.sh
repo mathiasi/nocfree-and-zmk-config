@@ -3,9 +3,9 @@
 #
 # Write one UF2 image to a mounted NocFree & bootloader volume, from macOS.
 #
-#   ./flash.sh left home      write firmware/zmk_nocfree_and_left_ISO_home.uf2
-#   ./flash.sh left office    write firmware/zmk_nocfree_and_left_ISO_office.uf2
-#   ./flash.sh right          write firmware/zmk_nocfree_and_right_ISO.uf2
+#   ./flash.sh left mac       write firmware/zmk_nocfree_and_left_nordic_mac.uf2
+#   ./flash.sh left windows   write firmware/zmk_nocfree_and_left_nordic_windows.uf2
+#   ./flash.sh right          write firmware/zmk_nocfree_and_right_nordic.uf2
 #   ./flash.sh --stock left   write stock-rollback/NocFree_and_V2.4.5_Left_ISO.uf2
 #   ./flash.sh --identify     say what is on the volume and write nothing
 #   ./flash.sh --image X.uf2  write an image from elsewhere, same checks
@@ -25,10 +25,10 @@
 # you pressed to get here. The CURRENT.UF2 identification below is the
 # cross-check -- it is a readback of what is actually installed.
 #
-# The left half takes a unit as well, because the two keyboards run different
-# keymaps and the keymap lives in the left image. There is no default: a home
-# keymap on the office unit types, but types the wrong characters. The right
-# image is the same for both units.
+# The left half takes a layout as well, because the Mac and Windows keymaps
+# differ and the keymap lives in the left image. There is no default: the
+# wrong one types, but types the wrong characters. The right image is the same
+# for both.
 
 set -euo pipefail
 
@@ -163,20 +163,20 @@ while [ $# -gt 0 ]; do
         -h|--help)  sed -n '4,32p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         left|right|Left|Right|LEFT|RIGHT)
             HALF="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"; shift ;;
-        home|office)
+        mac|windows)
             UNIT="$1"; shift ;;
         *) echo "unknown argument: $1" >&2; exit 1 ;;
     esac
 done
 [ "$IDENTIFY" -eq 1 ] || [ -n "$HALF" ] || [ -n "$IMAGE" ] || {
-    echo "say which half: ./flash.sh left home|office, or ./flash.sh right" >&2; exit 1; }
+    echo "say which half: ./flash.sh left mac|windows, or ./flash.sh right" >&2; exit 1; }
 if [ "$HALF" = left ] && [ "$STOCK" -eq 0 ] && [ -z "$UNIT" ]; then
-    echo "say which keyboard: ./flash.sh left home  or  ./flash.sh left office" >&2
+    echo "say which layout: ./flash.sh left mac  or  ./flash.sh left windows" >&2
     echo "The keymaps differ, and the keymap is in the left image." >&2
     exit 1
 fi
 if [ -n "$UNIT" ] && { [ "$HALF" != left ] || [ "$STOCK" -eq 1 ]; }; then
-    echo "home/office only applies to the ZMK left image; the others are shared" >&2
+    echo "mac/windows only applies to the ZMK left image; the others are shared" >&2
     exit 1
 fi
 if [ -n "$IMAGE" ] && [ -n "$HALF" ]; then
@@ -294,8 +294,8 @@ elif [ "$STOCK" -eq 1 ]; then
     esac
 else
     case "$HALF" in
-        left)  IMG="$REPO/firmware/zmk_nocfree_and_left_ISO_${UNIT}.uf2" ;;
-        right) IMG="$REPO/firmware/zmk_nocfree_and_right_ISO.uf2" ;;
+        left)  IMG="$REPO/firmware/zmk_nocfree_and_left_nordic_${UNIT}.uf2" ;;
+        right) IMG="$REPO/firmware/zmk_nocfree_and_right_nordic.uf2" ;;
     esac
 fi
 [ -f "$IMG" ] || { echo "missing image: $IMG" >&2; exit 1; }

@@ -1,36 +1,40 @@
-# NocFree & — ISO firmware (ZMK), macOS
+# NocFree & — Nordic ISO firmware (ZMK), macOS and Windows
 
-A ZMK user-config repository for two NocFree & keyboards. `./build.sh` (or
-CI) writes the images to `firmware/`; nothing else here is flashable.
+A ZMK user-config repository for NocFree & keyboards with Nordic ISO
+keycaps, in two layouts: one keymap for macOS and one for Windows. It builds
+on Thie1e's port, whose own keymap targets German ISO (branch iso-de); both
+keymaps here replace it wholesale. `./build.sh` (or CI) writes the images to
+`firmware/`; nothing else here is flashable.
 
-| Half  | File | Unit |
-|-------|------|------|
-| LEFT  | firmware/zmk_nocfree_and_left_ISO_home.uf2   | home (macOS) |
-| LEFT  | firmware/zmk_nocfree_and_left_ISO_office.uf2 | office (Windows) -- not yet in this repo |
-| RIGHT | firmware/zmk_nocfree_and_right_ISO.uf2       | both |
+| Half  | File | Layout |
+|-------|------|--------|
+| LEFT  | firmware/zmk_nocfree_and_left_nordic_mac.uf2     | macOS |
+| LEFT  | firmware/zmk_nocfree_and_left_nordic_windows.uf2 | Windows -- not yet in this repo |
+| RIGHT | firmware/zmk_nocfree_and_right_nordic.uf2        | both |
 
 The `zmk_` prefix distinguishes these from NocFree's own images, which are
 named `NocFree_and_V2.4.5_*.uf2`.
 
 SHA256:
 
-    left (home)  b7b811bf0b8c3253ba47bc377d4c3bf5c76fd4d835528a0d66ba672453e296d6
+    left (mac)   b7b811bf0b8c3253ba47bc377d4c3bf5c76fd4d835528a0d66ba672453e296d6
     right        76059637c40f86dc3f150b1b1790f541dd0d4682211b4430afcf7beb298551c2
 
-The home unit still runs the build from before the repository was
+The Mac keyboard still runs the build from before the repository was
 restructured (left 89df0ae6..., right 51b29c33...; the left half's last
-readback, backups/CURRENT-20260925-223612.uf2, matches it on all 950 blocks). The code is the same; the
-link layout is not -- see "Reproducibility" below. There is no need to reflash
+readback, backups/CURRENT-20260925-223612.uf2, matches it on all 950
+blocks). The code is the same; the link layout is not -- see
+"Reproducibility" below. There is no need to reflash
 for it. firmware/previous_*.uf2 keeps those two images so `flash.sh
 --identify` can still recognise them.
 
 Verify before flashing:
 
-    shasum -a 256 firmware/zmk_nocfree_and_left_ISO_home.uf2
+    shasum -a 256 firmware/zmk_nocfree_and_left_nordic_mac.uf2
 
-Most of this README describes the home unit's macOS configuration. The office
-unit runs the same build configured for Windows. Two things differ, both described under Keymap below: the bottom
-row, and the two ISO keys that macOS maps the opposite way round from every
+Most of this README describes the macOS layout. The Windows layout is the
+same build with a different keymap. Two things differ, both described under
+Keymap below: the bottom row, and the two ISO keys that macOS maps the opposite way round from every
 other host. Everything else — the Fn layer, the Nav layer, the recovery keys,
 the Kconfig — is identical.
 
@@ -40,9 +44,9 @@ The standard ZMK user-config shape, so GitHub Actions can build it with ZMK's
 own reusable workflow:
 
     config/west.yml         pinned sources: ZMK, and the board port
-    config/home.keymap      the home unit's keymap (macOS)
-    config/office.keymap    the office unit's keymap (Windows) -- to be added
-    config/nocfree_and.conf Kconfig, shared by both units
+    config/mac.keymap       the macOS layout
+    config/windows.keymap   the Windows layout -- to be added
+    config/nocfree_and.conf Kconfig, shared by both layouts
     build.yaml              what to build: board x keymap -> artifact name
     zephyr/module.yml       makes this repository a Zephyr module, so that
     CMakeLists.txt, Kconfig   modules/ is compiled in
@@ -55,15 +59,15 @@ own reusable workflow:
     stock-rollback/         vendor factory images (ignored by git)
 
 The two keymaps are separate files on purpose and must never be copied
-between units. See the header of config/home.keymap for where they differ.
-A keymap-only change needs only that unit's LEFT half reflashed: the right
-image is shared by both units, because the peripheral never links a keymap.
+over each other. See the header of config/mac.keymap for where they differ.
+A keymap-only change needs only the LEFT half reflashed: the right image is
+shared by both layouts, because the peripheral never links a keymap.
 
 ## Tools
 
     ./build.sh                     rebuild every image in build.yaml
     ./dfu-touch.sh                 list the halves, or drop one into its bootloader
-    ./flash.sh left home|office    write a left image to a mounted bootloader volume
+    ./flash.sh left mac|windows    write a left image to a mounted bootloader volume
     ./flash.sh right               write the right image
 
 All three are macOS scripts. `build.sh` runs the toolchain inside Apple's
@@ -148,9 +152,9 @@ This is the one place the Windows sibling differs. There, those same
 characters come from AltGr, which the factory row puts three keys right of the
 space bar behind Command and Fn, so that build moves AltGr in beside the space
 bar and puts Ctrl/Win/Alt into PC order. Neither departure buys anything on
-macOS. To rebuild the Windows row from `config/home.keymap`: swap LALT with
-LGUI on the left, RGUI with RALT on the right -- but the office unit has its
-own keymap and its own differences, so start from that file, not this one.
+macOS. To rebuild the Windows row from `config/mac.keymap`: swap LALT with
+LGUI on the left, RGUI with RALT on the right -- but the Windows layout has
+its own keymap and its own differences, so start from that file, not this one.
 
 ## Telling the halves apart
 
@@ -350,14 +354,14 @@ the 128 KiB SRAM, with a Thumb-aligned reset vector inside the application
 region. That is the application base established from the silicon. The
 SoftDevice line corroborates it: S140 7.x bases the application at 0x27000.
 
-  1. Fn+5 held 5 s on the LEFT half. `./flash.sh left home`
+  1. Fn+5 held 5 s on the LEFT half. `./flash.sh left mac`
   2. Confirm it types over USB.
   3. Test both recovery routes: `./dfu-touch.sh --half left`, and Fn+Esc held
      1.5 s. Either one returning the volume closes the loop.
   4. If both fail, stop. The right half is still stock and the factory images
      are in hand.
   5. If they work, the left half is sitting in its bootloader after step 3, so
-     write it again -- `./flash.sh left home` -- to bring it back up.
+     write it again -- `./flash.sh left mac` -- to bring it back up.
   6. Then flash RIGHT: Fn+0 held 5 s, then `./flash.sh right`.
 
 Note: with ZMK on the left and factory firmware on the right, the two halves
@@ -421,13 +425,14 @@ and the factory filesystem are never written.
 
 The fork's own suite -- 84 tests -- passes against these artifacts. Run from
 a checkout of the fork, against the workspace build.sh leaves behind. Build
-directories are now named after build.yaml artifacts (build/nocfree_and_left_ISO_home
-rather than build/left), so check what the suite expects before relying on it:
+directories are now named after build.yaml artifacts
+(build/nocfree_and_left_nordic_mac rather than build/left), so check what the
+suite expects before relying on it:
 
     NOCFREE_BUILD_DIR=~/.cache/zmk-nocfree/ws/build ./tests/run.sh
 
 Both deviations from the fork default are applied as user-config overrides, so
-the upstream repository is untouched: config/home.keymap and config/nocfree_and.conf
+the upstream repository is untouched: config/mac.keymap and config/nocfree_and.conf
 (idle timeout 60 s instead of 60 min, so the backlight actually switches off,
 plus the BLE stability settings documented in that file).
 

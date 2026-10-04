@@ -73,7 +73,7 @@ Flash the LEFT half only. Each test says which half its keys are on.
 
     dead after idle, stays dead      both the interrupt and the fallback are
                                      broken. Recover with ./dfu-touch.sh
-                                     --half left, then ./flash.sh left home.
+                                     --half left, then ./flash.sh left mac.
 
     first key after idle lost,       INT cleared without the scan consuming
     second works                     the state. A level interrupt should make

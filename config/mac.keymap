@@ -11,8 +11,8 @@
 #include <dt-bindings/zmk/outputs.h>
 
 /*
- * HOME unit -- macOS, factory keycaps (Fn outermost). The office unit has its
- * own keymap, config/office.keymap. The two differ on purpose in three
+ * macOS layout, Nordic ISO, factory keycaps (Fn outermost). The Windows
+ * layout is config/windows.keymap. The two differ on purpose in three
  * places: the bottom row, the crossed ISO keys described below, and the
  * F-row (shortcuts unmodified here, F1-F12 behind Fn). Never copy one file
  * over the other; a change that belongs on both is made in both, by hand.
