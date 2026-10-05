@@ -51,17 +51,24 @@ own reusable workflow:
     zephyr/module.yml       makes this repository a Zephyr module, so that
     CMakeLists.txt, Kconfig   modules/ is compiled in
     modules/ble-profile-name/   per-profile Bluetooth names
-    patches/                normally absent; local board-port experiments
-    .github/workflows/      CI; refuses to run while patches/ is non-empty
+    .github/workflows/      CI
     diagnostics/int-probe/  the probe that established the INT line works
-    firmware/               build output (ignored by git)
-    backups/                flash.sh readbacks (ignored by git)
-    stock-rollback/         vendor factory images (ignored by git)
 
 The two keymaps are separate files on purpose and must never be copied
 over each other. See the header of config/mac.keymap for where they differ.
 A keymap-only change needs only the LEFT half reflashed: the right image is
-shared by both layouts, because the peripheral never links a keymap.
+shared by both layouts, because the peripheral never links a keymap. It
+reports key positions over the split link, and the left half decides what
+each position means -- so even the right half's AltGr, Command and Alt keys
+are defined in the left image. Checked 2026-10-05: a build with the Windows
+bottom row (AltGr beside the space bar, PC modifier order) and the ISO keys
+uncrossed changed the left image and left the right one byte-identical.
+
+The exception would be a behaviour that executes on the half whose key
+triggered it -- reset, bootloader, backlight. Those are compiled into the
+right image too. build.yaml builds the right half once, against the Mac
+keymap, so if the Windows keymap ever uses one of those the Mac keymap does
+not, the right half needs a build per layout as well.
 
 ## Tools
 
