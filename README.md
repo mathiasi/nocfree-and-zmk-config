@@ -21,15 +21,11 @@ SHA256:
     left (windows)   43cb0bc627132b7cf57e9ac5a913afadff51360b2526e4ef99d7f0cd6d9b94ce
     right            717415bd412abc57984c8f8df75ab7e8242bd2ee27aa110ceeead5f82ab7b24b
 
-The Mac keyboard still runs the build from before the repository was
-restructured (left 89df0ae6..., right 51b29c33...; the left half's last
-readback, backups/CURRENT-20260925-223612.uf2, matches it on all 950
-blocks). Its link layout differs from these images -- see "Reproducibility"
-below -- and since 2026-10-05 so does its code, by one Kconfig change: the
-re-pairing fix in nocfree_and.conf (see "Re-pairing a host"). There is no
-need to reflash unless re-pairing a host fails, and then it is both halves.
-firmware/previous_*.uf2 keeps those two images so `flash.sh --identify` can
-still recognise them.
+The Mac keyboard runs these images: both halves flashed 2026-10-05 with
+left f63f7a40... and right 717415bd..., each half confirmed by serial and by a
+CURRENT.UF2 readback before the write. It previously ran the build from before
+the repository was restructured (left 89df0ae6..., right 51b29c33...),
+which the readbacks matched block for block.
 
 The Windows keyboard predates this repository. It was last flashed on
 2026-10-01 with left bbb9ab7b..., right a078308f...: Thie1e's iso-de at
