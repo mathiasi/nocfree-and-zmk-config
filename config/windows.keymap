@@ -11,18 +11,17 @@
 #include <dt-bindings/zmk/outputs.h>
 
 /*
- * macOS layout, Nordic ISO, factory keycaps (Fn outermost). The Windows
- * layout is config/windows.keymap. The two differ on purpose in four
- * places: the bottom row, the crossed ISO keys described below, the F-row
- * (shortcuts unmodified here, F1-F12 behind Fn), and Fn+` -- the key left
- * of 1 -- which clears the Bluetooth profile there and is unbound here.
- * Never copy one file over the other; a change that belongs on both is made
- * in both, by hand.
+ * Windows layout, Nordic ISO, Control and Fn keycaps swapped. The macOS
+ * layout is config/mac.keymap. The two differ on purpose in four places:
+ * the bottom row, the two ISO keys macOS crosses (uncrossed here), the
+ * F-row (F1-F12 unmodified here, shortcuts behind Fn), and Fn+` as a
+ * left-half clear-profile. Never copy one file over the other; a change
+ * that belongs on both is made in both, by hand.
  */
 
 /*
- * ISO map, the factory arrangement throughout, plus a Caps-Lock navigation
- * layer. For macOS with a Nordic layout.
+ * ISO map, factory arrangement, retuned for Windows + a Nordic layout,
+ * plus a Caps-Lock navigation layer.
  *
  * This is a user-config keymap: it replaces the board keymap at
  * boards/nocfree/nocfree_and/nocfree_and.keymap wholesale, so the behaviour
@@ -36,48 +35,15 @@
  *   NON_US_BSLH  the key between LSHFT and Z      Nordic: < > backslash
  *   NON_US_HASH  the key left of the ISO Enter    Nordic: apostrophe, star
  *
- * Except that on macOS those first two are crossed, and this keymap crosses
- * them back. macOS maps HID 0x35 (GRAVE) and 0x64 (NON_US_BSLH) the opposite
- * way round from Windows, Linux and every other host, on any ISO keyboard
- * that is not an Apple one. Bound positionally, the result is that the key
- * left of Z types what the key left of 1 should, and vice versa.
- *
- * MEASURED on this unit, macOS 27, Danish layout, keyboard type set to ISO:
- *
- *   key left of 1, sending GRAVE          typed  <  >     wanted  $  §
- *   key left of Z, sending NON_US_BSLH    typed  $  §     wanted  <  >
- *
- * So the two are swapped here: the key left of 1 sends NON_US_BSLH and the
- * key left of Z sends GRAVE. Each key then produces its own legend. This is
- * the one place the firmware compensates for a host rather than describing
- * the hardware, and it is why this file is not portable back to Windows --
- * doing that needs these two put back as well as the bottom row.
- *
  * Bindings are listed in visual reading order. Each line pair is one physical
  * row: the left half first, then the right half. Row widths are
  * 7+8, 7+8, 6+8, 6+8, 7+8, 5+7 = 85.
  *
  * Layers: 0 base, 1 Fn, 2 Nav (held with Caps Lock).
  *
- * The top row is inverted relative to the arrangement NocFree publishes, at
- * the owner's request, to match how Apple's own keyboards behave: the
- * Mac-legend shortcuts -- brightness, Mission Control, Spotlight, media -- are
- * what the keys do unmodified, and F1-F12 are behind Fn.
- *
- * The legends printed on these caps are the shortcuts, so the base layer now
- * does what the caps say and the F-numbers are the hidden meaning. NocFree
- * ships it the other way round.
- *
- * This needs a matching host setting, and does nothing useful without it.
- * With "Use F1, F2, etc. keys as standard function keys" OFF -- the macOS
- * default -- macOS reinterprets F1-F12 as media keys itself, so Fn+F1 would
- * arrive as brightness-down and a real F1 would be unreachable. Turn it ON:
- * System Settings -> Keyboard -> Keyboard Shortcuts -> Function Keys. The
- * base layer is unaffected by that setting either way, because it sends
- * consumer usages rather than F-numbers.
- *
- * Esc stays Esc, Home/End stay put, and Fn+Esc is still the bootloader.
- * The bottom row is the factory order; see below.
+ * The base layer and function row follow the arrangement NocFree publishes
+ * for this keyboard: plain F1-F12 on the base layer, the Mac-legend shortcuts
+ * on Fn. The bottom row deviates: see below.
  *
  * Two bindings sit in slots the factory arrangement leaves empty, because
  * this firmware drives hardware the factory map does not address:
@@ -97,27 +63,25 @@
  * describe this one -- the owner read the keys off the physical keyboard.
  * Print Screen keeps a home on Fn+Home.
  *
- * The bottom row is the factory order, matching the Mac legends on the retail
- * keycaps:
+ * The bottom row: two deliberate departures from the factory order, which is
+ * Fn / Control / Option / Command outside in, matching the Mac legends on the
+ * retail keycaps. On Windows those legends read differently -- Option is Alt
+ * and Command is the Windows key -- so the factory order puts Alt and Win the
+ * wrong way round against every other PC keyboard, and it puts AltGr three
+ * keys right of the space bar, behind Command and Fn.
  *
- *   left    Fn / Control / Option / Command, outside in
- *   right   Command / Fn / Option, reading outward from the space bar
+ * That second one is the expensive one on a Nordic layout, where @ $ { [ ] }
+ * and the backslash and pipe all need AltGr. So:
  *
- * Command lands under either thumb, which is where macOS wants it -- every
- * system shortcut is a Command chord. Option needs no special placement,
- * because a Nordic layout on macOS takes its third-level characters --
- * @ $ { [ ] } and the backslash and pipe -- from Option, and an Option key
- * sits one out from each thumb already.
+ *   left    Control / Fn / Win / Alt outside in. Control is outermost
+ *           because the Control and Fn keycaps on this unit have been
+ *           swapped physically; the firmware follows the caps. Win and Alt
+ *           stay in PC order.
+ *   right   AltGr immediately right of the space bar, then Fn, then Win.
  *
- * The Windows sibling of this config rearranges this row: LGUI and LALT
- * into PC order, and AltGr in beside the space bar, because under Windows
- * those same characters come from AltGr and the factory row puts it three
- * keys out, behind Command and Fn. Neither departure buys anything on macOS,
- * so this keymap leaves the row as the factory drew it. To rebuild the
- * Windows row: swap LALT with LGUI on the left, RGUI with RALT on the right.
- * That unit also runs Control outermost, because its Control and Fn keycaps
- * were physically swapped and the firmware follows the caps; this one has
- * factory caps, so Fn stays on the edge.
+ * Everything else is the factory arrangement. To go back to the factory
+ * bottom row, swap LGUI with LALT on the left, RALT with RGUI on the right,
+ * and put Fn back outermost on the left.
  *
  * Recovery keys. Both halves can be dropped into their preserved UF2
  * bootloader from the keymap, and both the factory combinations and the
@@ -131,7 +95,8 @@
  * right-half ones -- the same split the factory combinations rely on. Tap
  * resets that half; hold 1.5 s reaches the bootloader. Binding Fn+5 and Fn+0
  * displaced two Bluetooth controls, which moved one key outward:
- * profile 4 is now Fn+6, and clear-profile is now Fn+Backspace.
+ * profile 5 is now Fn+6, and clear-profile is now Fn+Backspace. Clear-profile
+ * is also on Fn+` (½ on Nordic legends), a left-half key, so it works without the right half.
  */
 
 / {
@@ -193,10 +158,10 @@
         default_layer {
             display-name = "Base";
             bindings = <
-                &kp ESC   &kp C_BRI_DN &kp C_BRI_UP &kp C_AC_DESKTOP_SHOW_ALL_WINDOWS &kp C_AC_SEARCH &bl BL_SET 0 &bl BL_SET 100
-                &kp C_PREVIOUS &kp C_PLAY_PAUSE &kp C_NEXT &kp C_MUTE &kp C_VOL_DN &kp C_VOL_UP &kp HOME &kp END
+                &kp ESC   &kp F1    &kp F2    &kp F3    &kp F4    &kp F5    &kp F6
+                &kp F7    &kp F8    &kp F9    &kp F10   &kp F11   &kp F12   &kp HOME  &kp END
 
-                &kp NON_US_BSLH &kp N1 &kp N2 &kp N3 &kp N4   &kp N5    &kp N6
+                &kp GRAVE &kp N1    &kp N2    &kp N3    &kp N4    &kp N5    &kp N6
                 &kp N7    &kp N8    &kp N9    &kp N0    &kp MINUS &kp EQUAL &kp BSPC  &kp PG_UP
 
                 &kp TAB   &kp Q     &kp W     &kp E     &kp R     &kp T
@@ -205,11 +170,11 @@
                 &caps_nav 2 CAPS    &kp A     &kp S     &kp D     &kp F     &kp G
                 &kp H     &kp J     &kp K     &kp L     &kp SEMI  &kp SQT   &kp NON_US_HASH &kp RET
 
-                &kp LSHFT &kp GRAVE &kp Z     &kp X     &kp C     &kp V     &kp B
+                &kp LSHFT &kp NON_US_BSLH &kp Z &kp X   &kp C     &kp V     &kp B
                 &kp N     &kp M     &kp COMMA &kp DOT   &kp FSLH  &kp RSHFT &kp UP    &kp DEL
 
-                &mo 1     &kp LCTRL &kp LALT  &kp LGUI  &kp SPACE
-                &kp SPACE &kp RGUI  &mo 1     &kp RALT  &kp LEFT  &kp DOWN  &kp RIGHT
+                &kp LCTRL &mo 1     &kp LGUI  &kp LALT  &kp SPACE
+                &kp SPACE &kp RALT  &mo 1     &kp RGUI  &kp LEFT  &kp DOWN  &kp RIGHT
             >;
         };
 
@@ -220,14 +185,21 @@
          *   Fn+Esc        tap: reset the left half   hold 1.5 s: its bootloader
          *   Fn+5          the same, matching factory firmware's combination
          *   Fn+F1 / F2    display brightness down / up
-         *   Fn+F3         Mission Control         Fn+F4  Spotlight
+         *   Fn+F3         show all windows        Fn+F4  search
          *   Fn+F5 / F6    backlight off / on      (this firmware, not factory)
          *   Fn+F7..F12    prev, play/pause, next, mute, volume down, volume up
          *   Fn+Home       Print Screen
          *   Fn+1..Fn+4    select Bluetooth profile 0..3
          *   Fn+6          select Bluetooth profile 4
-         *   Fn+Backspace  clear the selected Bluetooth profile
-         *   Fn+U          send HID over USB       Fn+B  send HID over Bluetooth
+         *   Fn+`          clear the selected Bluetooth profile (Fn+½ on Nordic)
+         *   Fn+Backspace  the same
+         *
+         * Fn+` is the one that always works. Backspace is a right-half key,
+         * so Fn+Backspace only reaches the central while the split link is
+         * up -- and a bond that has gone stale is exactly when you need it.
+         * Grave sits on the left half, next to the profile keys.
+         *
+         *   Fn+U         send HID over USB       Fn+B  send HID over Bluetooth
          *   Fn+i          type the battery level as "bat NN"
          *   Fn+Delete     tap: reset the right half  hold 1.5 s: its bootloader
          *   Fn+0          the same, matching factory firmware's combination
@@ -240,10 +212,10 @@
         function_layer {
             display-name = "Fn";
             bindings = <
-                &boot_reset 0 0 &kp F1 &kp F2 &kp F3  &kp F4    &kp F5    &kp F6
-                &kp F7    &kp F8    &kp F9    &kp F10   &kp F11   &kp F12   &kp PSCRN &trans
+                &boot_reset 0 0 &kp C_BRI_DN &kp C_BRI_UP &kp C_AC_DESKTOP_SHOW_ALL_WINDOWS &kp C_AC_SEARCH &bl BL_SET 0 &bl BL_SET 100
+                &kp C_PREVIOUS &kp C_PLAY_PAUSE &kp C_NEXT &kp C_MUTE &kp C_VOL_DN &kp C_VOL_UP &kp PSCRN  &trans
 
-                &trans     &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &boot_reset 0 0 &bt BT_SEL 4
+                &bt BT_CLR &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &boot_reset 0 0 &bt BT_SEL 4
                 &trans     &trans     &trans  &boot_reset 0 0 &trans     &trans     &bt BT_CLR &trans
 
                 &trans     &trans     &trans     &trans     &trans     &trans

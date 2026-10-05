@@ -9,7 +9,7 @@ keymaps here replace it wholesale. `./build.sh` (or CI) writes the images to
 | Half  | File | Layout |
 |-------|------|--------|
 | LEFT  | firmware/zmk_nocfree_and_left_nordic_mac.uf2     | macOS |
-| LEFT  | firmware/zmk_nocfree_and_left_nordic_windows.uf2 | Windows -- not yet in this repo |
+| LEFT  | firmware/zmk_nocfree_and_left_nordic_windows.uf2 | Windows |
 | RIGHT | firmware/zmk_nocfree_and_right_nordic.uf2        | both |
 
 The `zmk_` prefix distinguishes these from NocFree's own images, which are
@@ -23,20 +23,30 @@ SHA256:
 The Mac keyboard still runs the build from before the repository was
 restructured (left 89df0ae6..., right 51b29c33...; the left half's last
 readback, backups/CURRENT-20260925-223612.uf2, matches it on all 950
-blocks). The code is the same; the link layout is not -- see
-"Reproducibility" below. There is no need to reflash
-for it. firmware/previous_*.uf2 keeps those two images so `flash.sh
---identify` can still recognise them.
+blocks). Its link layout differs from these images -- see "Reproducibility"
+below -- and since 2026-10-05 so does its code, by one Kconfig change: the
+re-pairing fix in nocfree_and.conf (see "Re-pairing a host"). There is no
+need to reflash unless re-pairing a host fails, and then it is both halves.
+firmware/previous_*.uf2 keeps those two images so `flash.sh --identify` can
+still recognise them.
+
+The Windows keyboard predates this repository. It was last flashed on
+2026-10-01 with left bbb9ab7b..., right a078308f...: Thie1e's iso-de at
+08bc83b with the Windows keymap and the re-pairing fix, but none of the
+board-port changes (INT-line idle, deep sleep). No readback has been taken
+since that write. Moving it to these images means both halves, because the
+right image now carries the kscan changes.
 
 Verify before flashing:
 
     shasum -a 256 firmware/zmk_nocfree_and_left_nordic_mac.uf2
 
 Most of this README describes the macOS layout. The Windows layout is the
-same build with a different keymap. Two things differ, both described under
-Keymap below: the bottom row, and the two ISO keys that macOS maps the opposite way round from every
-other host. Everything else — the Fn layer, the Nav layer, the recovery keys,
-the Kconfig — is identical.
+same build with a different keymap. Four things differ, all described under
+"The Windows layout" below: the F-row, the bottom row, the two ISO keys that
+macOS maps the opposite way round from every other host, and a left-half key
+to clear a Bluetooth profile. Everything else — the rest of the Fn layer, the
+Nav layer, the recovery keys, the Kconfig — is identical.
 
 ## Repository layout
 
@@ -45,7 +55,7 @@ own reusable workflow:
 
     config/west.yml         pinned sources: ZMK, and the board port
     config/mac.keymap       the macOS layout
-    config/windows.keymap   the Windows layout -- to be added
+    config/windows.keymap   the Windows layout
     config/nocfree_and.conf Kconfig, shared by both layouts
     build.yaml              what to build: board x keymap -> artifact name
     zephyr/module.yml       makes this repository a Zephyr module, so that
@@ -55,7 +65,7 @@ own reusable workflow:
     diagnostics/int-probe/  the probe that established the INT line works
 
 The two keymaps are separate files on purpose and must never be copied
-over each other. See the header of config/mac.keymap for where they differ.
+over each other. See the header of either keymap for where they differ.
 A keymap-only change needs only the LEFT half reflashed: the right image is
 shared by both layouts, because the peripheral never links a keymap. It
 reports key positions over the split link, and the left half decides what
@@ -155,13 +165,40 @@ Nordic layout on macOS takes its third-level characters — @ $ { [ ] } and the
 backslash and pipe — from Option, and an Option key already sits one out from
 each thumb.
 
-This is the one place the Windows sibling differs. There, those same
+This is where the Windows layout departs furthest. There, those same
 characters come from AltGr, which the factory row puts three keys right of the
-space bar behind Command and Fn, so that build moves AltGr in beside the space
+space bar behind Command and Fn, so that layout moves AltGr in beside the space
 bar and puts Ctrl/Win/Alt into PC order. Neither departure buys anything on
-macOS. To rebuild the Windows row from `config/mac.keymap`: swap LALT with
-LGUI on the left, RGUI with RALT on the right -- but the Windows layout has
-its own keymap and its own differences, so start from that file, not this one.
+macOS.
+
+### The Windows layout
+
+`config/windows.keymap`, for the sibling unit. The Nav layer, the recovery
+keys, the rest of the Fn layer and the Kconfig are the ones described above.
+Four things differ, on purpose:
+
+The F-row is the one NocFree ships: plain F1-F12 unmodified, the shortcuts
+behind Fn. Windows needs no matching setting. Fn+F3 and Fn+F4 send the same
+usages the Mac layout puts on F3 and F4 -- show all windows and search -- and
+are untested on Windows.
+
+The bottom row is in PC order, with AltGr beside the space bar:
+
+    left    Ctrl  Fn  Win  Alt  [Space]
+    right   [Space]  AltGr  Fn  Win  left down right
+
+Control is outermost because that unit's Control and Fn keycaps were
+physically swapped; the firmware follows the caps.
+
+The ISO keys are not crossed. The key left of 1 sends GRAVE and the key left
+of Z sends NON_US_BSLH, which is what Windows expects -- see "The two ISO
+keys are crossed on macOS" below.
+
+Fn+½ (the key left of 1) also clears the selected Bluetooth profile.
+Backspace is a right-half key, so Fn+Backspace only reaches the left half
+while the split link is up, and a broken link is when clearing a profile is
+most needed. ½ is a left-half key, so it always works. The Mac layout leaves
+that slot unbound.
 
 ## Telling the halves apart
 
@@ -439,9 +476,10 @@ suite expects before relying on it:
     NOCFREE_BUILD_DIR=~/.cache/zmk-nocfree/ws/build ./tests/run.sh
 
 Both deviations from the fork default are applied as user-config overrides, so
-the upstream repository is untouched: config/mac.keymap and config/nocfree_and.conf
-(idle timeout 60 s instead of 60 min, so the backlight actually switches off,
-plus the BLE stability settings documented in that file).
+the upstream repository is untouched: the two keymaps in config/, and
+config/nocfree_and.conf (idle timeout 60 s instead of 60 min, so the backlight
+actually switches off, plus the BLE stability settings and the re-pairing fix
+documented in that file).
 
 `modules/ble-profile-name/` is built into the LEFT half, and only the left. It
 is an out-of-tree ZMK module that names the advertised device after the active
@@ -528,6 +566,30 @@ that build.sh passes explicitly, rather than editing nocfree_and.conf.
 
 Either way it is a Kconfig change, so both halves recompile and both need
 reflashing. That is the cost to weigh against a link that currently works.
+
+### Re-pairing a host
+
+All five profiles share one Bluetooth address, so to a host BLE1..BLE5 are
+one device under different names. Pair each host on one profile only. A host
+that holds any pairing with the keyboard, even a stale one, hides it from its
+add-device list; and the keyboard stops advertising once the selected
+profile's host is connected, so select an empty profile before pairing a new
+one.
+
+To re-pair a host:
+
+  1. Remove the keyboard on the host.
+  2. On the keyboard, select its profile (Fn+1..Fn+4, Fn+6) and clear it:
+     Fn+Backspace, or Fn+½ on the Windows layout.
+  3. Fn+B if USB is plugged in, then add "NocFree & BLE<n>" on the host.
+
+Before 2026-10-01 that could still fail on Windows. The keyboard kept the
+host's keys in a bond no profile pointed to, which BT_CLR cannot reach, and
+Zephyr refuses a fresh pairing from a peer it holds keys for.
+CONFIG_BT_SMP_ALLOW_UNAUTH_OVERWRITE in nocfree_and.conf lets the new pairing
+replace those keys; pairing is still only accepted on an open profile. It is
+in both layouts since 2026-10-05, and the Mac unit's running build predates
+it.
 
 ## The PCA9555 INT line: working
 
@@ -677,12 +739,13 @@ by eye on a different unit, to match the halves and to keep a capacitor from
 whining at low duty. If this unit wants more light, that is the number to
 raise.
 Developed and tested on Linux; the Windows sibling is in daily use. This macOS
-configuration differs from it only in the bottom row.
+configuration differs from it in the four places listed under "The Windows
+layout".
 
 Two macOS-specific notes, neither a defect in the firmware:
 
   - Fn+Home sends Print Screen, which macOS does not act on. Screenshots are
     Cmd-Shift-3/4/5. The binding is left in place so the two configurations
-    stay identical everywhere but the bottom row.
+    differ only where they have to.
   - macOS deliberately delays Caps Lock, so a very quick tap may not toggle it.
     Holding Caps Lock is the Nav layer and is unaffected.

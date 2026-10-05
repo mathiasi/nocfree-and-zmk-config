@@ -4,10 +4,11 @@
 # the one list of images.
 #
 # Two layouts, both Nordic ISO: macOS and Windows. The keymaps differ on
-# purpose -- bottom row, the two crossed ISO keys, the F-row -- and must never
-# be copied over each other; see the header of each .keymap. Only the left
-# half links a keymap, so the right image is shared by both and is built once
-# (it still needs a keymap to configure, and any of them gives the same bytes).
+# purpose -- bottom row, the two crossed ISO keys, the F-row, a left-half
+# clear-profile on Windows -- and must never be copied over each other; see the
+# header of each .keymap. Only the left half links a keymap, so the right
+# image is shared by both and is built once (it still needs a keymap to
+# configure, and any of them gives the same bytes).
 #
 # ${GITHUB_WORKSPACE} is the repository root: set by Actions, and by build.sh
 # inside its container.
@@ -17,10 +18,9 @@ include:
     cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/mac.keymap
     artifact-name: nocfree_and_left_nordic_mac
 
-  # Uncomment once config/windows.keymap is in the repository.
-  # - board: nocfree_and_left/nrf52833/zmk
-  #   cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/windows.keymap
-  #   artifact-name: nocfree_and_left_nordic_windows
+  - board: nocfree_and_left/nrf52833/zmk
+    cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/windows.keymap
+    artifact-name: nocfree_and_left_nordic_windows
 
   - board: nocfree_and_right/nrf52833/zmk
     cmake-args: -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/mac.keymap
