@@ -80,7 +80,10 @@ The exception would be a behaviour that executes on the half whose key
 triggered it -- reset, bootloader, backlight. Those are compiled into the
 right image too. build.yaml builds the right half once, against the Mac
 keymap, so if the Windows keymap ever uses one of those the Mac keymap does
-not, the right half needs a build per layout as well.
+not, the right half needs a build per layout as well. Checked when the Windows
+keymap was added (2026-10-05): both keymaps use the same behaviours, and a
+right half built against the Windows keymap is byte-identical to the shared
+one (717415bd...).
 
 ## Tools
 
