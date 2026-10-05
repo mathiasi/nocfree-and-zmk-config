@@ -17,8 +17,9 @@ named `NocFree_and_V2.4.5_*.uf2`.
 
 SHA256:
 
-    left (mac)   b7b811bf0b8c3253ba47bc377d4c3bf5c76fd4d835528a0d66ba672453e296d6
-    right        76059637c40f86dc3f150b1b1790f541dd0d4682211b4430afcf7beb298551c2
+    left (mac)       f63f7a40f6fedc01c867d70079c3303be56fd4141ca5547a4ca3dc32a84e2f08
+    left (windows)   43cb0bc627132b7cf57e9ac5a913afadff51360b2526e4ef99d7f0cd6d9b94ce
+    right            717415bd412abc57984c8f8df75ab7e8242bd2ee27aa110ceeead5f82ab7b24b
 
 The Mac keyboard still runs the build from before the repository was
 restructured (left 89df0ae6..., right 51b29c33...; the left half's last
@@ -40,6 +41,7 @@ right image now carries the kscan changes.
 Verify before flashing:
 
     shasum -a 256 firmware/zmk_nocfree_and_left_nordic_mac.uf2
+    Get-FileHash firmware\zmk_nocfree_and_left_nordic_windows.uf2   (PowerShell)
 
 Most of this README describes the macOS layout. The Windows layout is the
 same build with a different keymap. Four things differ, all described under
@@ -463,8 +465,9 @@ Toolchain pinned by digest rather than by a moving tag:
     12.2.0. `stable` moving is the one loose end left by pinning the fork
     commit and the ZMK commit, and a moved toolchain changes the bytes.
 
-Flash use: left 95.76%, right 76.95% of the 248 KiB code partition.
-All written blocks lie in 0x27000-0x61F00. SoftDevice S140, the UF2 bootloader
+Flash use: left 95.79% (either layout), right 76.95% of the 248 KiB code
+partition. All written blocks lie in 0x27000-0x62700, below the settings
+partition at 0x65000. SoftDevice S140, the UF2 bootloader
 and the factory filesystem are never written.
 
 The fork's own suite -- 84 tests -- passes against these artifacts. Run from
