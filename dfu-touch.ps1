@@ -49,7 +49,11 @@ function Get-NocFreePort {
     # Right") is only exposed as the bus-reported device description, so read
     # that. Board-ID on the bootloader drive is identical on both halves too,
     # making this the only reliable way to tell them apart on Windows.
-    Get-PnpDevice -Class Ports -ErrorAction SilentlyContinue |
+    #
+    # -PresentOnly: Windows keeps every port it has ever enumerated, so
+    # without it a half cabled on some earlier day is listed as if it were
+    # plugged in now -- and -Half then picks a COM port that is not there.
+    Get-PnpDevice -Class Ports -PresentOnly -ErrorAction SilentlyContinue |
         Where-Object { $_.InstanceId -like "*$VidPid*" } |
         ForEach-Object {
             $desc = (Get-PnpDeviceProperty -InstanceId $_.InstanceId `
