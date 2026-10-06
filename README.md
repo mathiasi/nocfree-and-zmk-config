@@ -27,12 +27,13 @@ CURRENT.UF2 readback before the write. It previously ran the build from before
 the repository was restructured (left 89df0ae6..., right 51b29c33...),
 which the readbacks matched block for block.
 
-The Windows keyboard predates this repository. It was last flashed on
-2026-10-01 with left bbb9ab7b..., right a078308f...: Thie1e's iso-de at
-08bc83b with the Windows keymap and the re-pairing fix, but none of the
-board-port changes (INT-line idle, deep sleep). No readback has been taken
-since that write. Moving it to these images means both halves, because the
-right image now carries the kscan changes.
+The Windows keyboard runs these images too: both halves flashed 2026-10-06
+with left 43cb0bc6... and right 717415bd..., confirmed the same way. It
+previously ran a build from before this repository existed (left bbb9ab7b...,
+right a078308f...: Thie1e's iso-de at 08bc83b with the Windows keymap and the
+re-pairing fix, but none of the board-port changes), which the readbacks
+matched block for block. Its Bluetooth bond survived the flash, and both
+halves type across the split link.
 
 Verify before flashing:
 
